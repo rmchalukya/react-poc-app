@@ -36,17 +36,19 @@ const SIMULATED_APPLICANTS = [
 // --- Modal Component for Adding an Applicant ---
 function NewApplicantModal({ isOpen, onClose, onSave }) {
   const [name, setName] = useState("");
-  const [age, setAge] = useState(30);
-  const [salary, setSalary] = useState(5000);
+  // --- FIX: Store number inputs as strings to allow them to be empty ---
+  const [age, setAge] = useState("30");
+  const [salary, setSalary] = useState("5000");
 
   if (!isOpen) return null;
 
   const handleSave = () => {
     if (name && age && salary) {
-      onSave({ name, age, salary });
+      // --- FIX: Convert back to number on save ---
+      onSave({ name, age: Number(age), salary: Number(salary) });
       setName("");
-      setAge(30);
-      setSalary(5000);
+      setAge("30");
+      setSalary("5000");
     }
   };
 
@@ -70,7 +72,8 @@ function NewApplicantModal({ isOpen, onClose, onSave }) {
             <input
               type="number"
               value={age}
-              onChange={(e) => setAge(Number(e.target.value))}
+              // --- FIX: Update state with the raw string value ---
+              onChange={(e) => setAge(e.target.value)}
               className="mt-1 w-full border rounded px-3 py-2"
             />
           </div>
@@ -80,7 +83,8 @@ function NewApplicantModal({ isOpen, onClose, onSave }) {
               type="number"
               step="500"
               value={salary}
-              onChange={(e) => setSalary(Number(e.target.value))}
+              // --- FIX: Update state with the raw string value ---
+              onChange={(e) => setSalary(e.target.value)}
               className="mt-1 w-full border rounded px-3 py-2"
             />
           </div>
@@ -127,7 +131,7 @@ function SummaryModal({ isOpen, onClose, summary, isLoading, appData }) {
     );
 }
 
-// --- NEW: Modal for Displaying Raw Score Features ---
+// --- Modal for Displaying Raw Score Features ---
 function ExplainScoreModal({ isOpen, onClose, features, appId }) {
     if (!isOpen) return null;
 
@@ -164,8 +168,9 @@ function ExplainScoreModal({ isOpen, onClose, features, appId }) {
 // --- Main SubmitApplication Component ---
 export default function SubmitApplication() {
   const [applicantId, setApplicantId] = useState(1);
-  const [amount, setAmount] = useState(1000);
-  const [tenure, setTenure] = useState(1);
+  // --- FIX: Store number inputs as strings to allow them to be empty ---
+  const [amount, setAmount] = useState("1000");
+  const [tenure, setTenure] = useState("1");
   const [submitting, setSubmitting] = useState(false);
   const [apps, setApps] = useState([]);
   const [message, setMessage] = useState(null);
@@ -175,8 +180,6 @@ export default function SubmitApplication() {
   const [selectedAppData, setSelectedAppData] = useState(null);
   const [llmSummary, setLlmSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-
-  // --- NEW: State for the Explain Score Modal ---
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
   const [selectedAppFeatures, setSelectedAppFeatures] = useState(null);
 
@@ -194,7 +197,8 @@ export default function SubmitApplication() {
     e.preventDefault();
     setSubmitting(true);
     setMessage(null);
-    const res = await submitApp(applicantId, amount, tenure);
+    // --- FIX: Convert back to number on submit ---
+    const res = await submitApp(applicantId, Number(amount), Number(tenure));
     setSubmitting(false);
 
     if (res.error) {
@@ -229,9 +233,9 @@ export default function SubmitApplication() {
 
     const score = applicationData.score?.toFixed(2);
     const decision = applicationData.decision;
-    const amount = applicationData.requested_amount;
+    const reqAmount = applicationData.requested_amount;
 
-    let summaryText = `The applicant (ID: ${applicationData.applicant_id}) has applied for a loan of ${amount} AED. `;
+    let summaryText = `The applicant (ID: ${applicationData.applicant_id}) has applied for a loan of ${reqAmount} AED. `;
     if (score > 0.7) {
         summaryText += `With a high confidence score of ${score}, eligibility is strong. The AI's initial decision is to '${decision}'. The applicant shows a reliable financial history.`;
     } else if (score > 0.4) {
@@ -255,7 +259,6 @@ export default function SubmitApplication() {
     setIsGeneratingSummary(false);
   };
 
-  // --- NEW: Click handler for the "Explain Score" button ---
   const handleExplainScoreClick = (applicationData) => {
     setSelectedAppData(applicationData);
     setSelectedAppFeatures(applicationData.features);
@@ -278,7 +281,6 @@ export default function SubmitApplication() {
         appData={selectedAppData}
       />
 
-      {/* --- NEW: Render the Explain Score Modal --- */}
       <ExplainScoreModal
         isOpen={isExplainModalOpen}
         onClose={() => setIsExplainModalOpen(false)}
@@ -322,14 +324,15 @@ export default function SubmitApplication() {
 
         <div>
           <label className="block text-sm text-gray-600">
-            Requested Loan Amount (&le; 2500 AED)
+            Requested Loan Amount (≤ 2500 AED)
           </label>
           <input
             type="number"
             min={1000}
             step={500}
             value={amount}
-            onChange={(e) => setAmount(Number(e.target.value))}
+            // --- FIX: Update state with the raw string value ---
+            onChange={(e) => setAmount(e.target.value)}
             className="mt-1 w-full border rounded px-3 py-2"
             required
           />
@@ -337,13 +340,14 @@ export default function SubmitApplication() {
 
         <div>
           <label className="block text-sm text-gray-600">
-            Requested Tenure (&le; 24 Months)
+            Requested Tenure (≤ 24 Months)
           </label>
           <input
             type="number"
             min={1}
             value={tenure}
-            onChange={(e) => setTenure(Number(e.target.value))}
+            // --- FIX: Update state with the raw string value ---
+            onChange={(e) => setTenure(e.target.value)}
             className="mt-1 w-full border rounded px-3 py-2"
             required
           />
@@ -392,7 +396,6 @@ export default function SubmitApplication() {
                                   >
                                       Analyze with AI
                                   </button>
-                                  {/* --- NEW: Explain Score Button --- */}
                                   <button
                                       onClick={() => handleExplainScoreClick(a)}
                                       className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded hover:bg-gray-200"
