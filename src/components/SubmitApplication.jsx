@@ -5,32 +5,33 @@ import InfoEmpty from "./InfoEmpty";
 
 // --- Simulated database of 25 applicants ---
 const SIMULATED_APPLICANTS = [
-  { id: 1, name: "Aisha Al Futtaim" },
-  { id: 2, name: "Mohammed Al Maktoum" },
-  { id: 3, name: "Fatima Al Suwaidi" },
-  { id: 4, name: "Yusuf Al Blooshi" },
-  { id: 5, name: "Noor Al Marzooqi" },
-  { id: 6, name: "Khalid Al Ameri" },
-  { id: 7, name: "Mariam Al Hashemi" },
-  { id: 8, name: "Abdullah Al Ketbi" },
-  { id: 9, name: "Hessa Al Nuaimi" },
-  { id: 10, name: "Saeed Al Mansoori" },
-  { id: 11, name: "Latifa Al Shamsi" },
-  { id: 12, name: "Ahmed Al Zaabi" },
-  { id: 13, name: "Zainab Al Ali" },
-  { id: 14, name: "Omar Al Ghurair" },
-  { id: 15, name: "Salma Al Muhairi" },
-  { id: 16, name: "Rashid Al Qassimi" },
-  { id: 17, name: "Asma Al Dhaheri" },
-  { id: 18, name: "Tariq Al Rumaithi" },
-  { id: 19, name: "Dana Al Mehairi" },
-  { id: 20, name: "Faisal Al Jaber" },
-  { id: 21, name: "Reem Al Mazrouei" },
-  { id: 22, name: "Majid Al Falasi" },
-  { id: 23, name: "Shamsa Al Otaiba" },
-  { id: 24, name: "Hamad Al Kaabi" },
-  { id: 25, name: "Mona Al Ghafli" },
+  { id: 1, name: "John Smith" },
+  { id: 2, name: "Emily Johnson" },
+  { id: 3, name: "Michael Williams" },
+  { id: 4, name: "Jessica Brown" },
+  { id: 5, name: "David Jones" },
+  { id: 6, name: "Sarah Garcia" },
+  { id: 7, name: "James Miller" },
+  { id: 8, name: "Linda Davis" },
+  { id: 9, name: "Robert Rodriguez" },
+  { id: 10, name: "Mary Martinez" },
+  { id: 11, name: "William Hernandez" },
+  { id: 12, name: "Jennifer Lopez" },
+  { id: 13, name: "Richard Gonzalez" },
+  { id: 14, name: "Patricia Wilson" },
+  { id: 15, name: "Charles Anderson" },
+  { id: 16, name: "Barbara Thomas" },
+  { id: 17, name: "Joseph Taylor" },
+  { id: 18, name: "Elizabeth Moore" },
+  { id: 19, name: "Thomas Jackson" },
+  { id: 20, name: "Susan Martin" },
+  { id: 21, name: "Daniel Lee" },
+  { id: 22, name: "Karen Perez" },
+  { id: 23, name: "Matthew Thompson" },
+  { id: 24, name: "Nancy White" },
+  { id: 25, name: "Anthony Harris" },
 ];
+
 
 // --- Modal Component for Adding an Applicant ---
 function NewApplicantModal({ isOpen, onClose, onSave }) {
@@ -61,7 +62,7 @@ function NewApplicantModal({ isOpen, onClose, onSave }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1 w-full border rounded px-3 py-2"
-              placeholder="e.g., John Doe"
+              placeholder="e.g., Jane Doe"
             />
           </div>
           <div>
@@ -126,6 +127,40 @@ function SummaryModal({ isOpen, onClose, summary, isLoading, appData }) {
     );
 }
 
+// --- NEW: Modal for Displaying Raw Score Features ---
+function ExplainScoreModal({ isOpen, onClose, features, appId }) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl">
+                <h3 className="text-lg font-bold mb-4 text-sky-700">
+                    Score Calculation Features for Application #{appId}
+                </h3>
+                <div className="mt-4 p-4 bg-gray-50 rounded border max-h-[60vh] overflow-y-auto">
+                    {features ? (
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                            {Object.entries(features).map(([key, value]) => (
+                                <li key={key} className="flex justify-between border-b py-1">
+                                    <span className="text-gray-600 capitalize">{key.replace(/_/g, ' ')}:</span>
+                                    <span className="font-semibold text-gray-800">{typeof value === 'number' ? value.toFixed(4) : value}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p>No feature data available for this application.</p>
+                    )}
+                </div>
+                <div className="mt-6 flex justify-end">
+                    <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // --- Main SubmitApplication Component ---
 export default function SubmitApplication() {
   const [applicantId, setApplicantId] = useState(1);
@@ -140,6 +175,11 @@ export default function SubmitApplication() {
   const [selectedAppData, setSelectedAppData] = useState(null);
   const [llmSummary, setLlmSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+
+  // --- NEW: State for the Explain Score Modal ---
+  const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
+  const [selectedAppFeatures, setSelectedAppFeatures] = useState(null);
+
 
   const fetchApps = async () => {
     const recent = await getRecentApps();
@@ -215,6 +255,13 @@ export default function SubmitApplication() {
     setIsGeneratingSummary(false);
   };
 
+  // --- NEW: Click handler for the "Explain Score" button ---
+  const handleExplainScoreClick = (applicationData) => {
+    setSelectedAppData(applicationData);
+    setSelectedAppFeatures(applicationData.features);
+    setIsExplainModalOpen(true);
+  };
+
   return (
     <section>
       <NewApplicantModal
@@ -229,6 +276,14 @@ export default function SubmitApplication() {
         summary={llmSummary}
         isLoading={isGeneratingSummary}
         appData={selectedAppData}
+      />
+
+      {/* --- NEW: Render the Explain Score Modal --- */}
+      <ExplainScoreModal
+        isOpen={isExplainModalOpen}
+        onClose={() => setIsExplainModalOpen(false)}
+        features={selectedAppFeatures}
+        appId={selectedAppData?.application_id}
       />
 
       <h2 className="text-xl font-semibold text-sky-700 mb-4">
@@ -267,7 +322,7 @@ export default function SubmitApplication() {
 
         <div>
           <label className="block text-sm text-gray-600">
-            Requested Loan Amount (&lt;= 2500 AED)
+            Requested Loan Amount (&le; 2500 AED)
           </label>
           <input
             type="number"
@@ -282,7 +337,7 @@ export default function SubmitApplication() {
 
         <div>
           <label className="block text-sm text-gray-600">
-            Requested Tenure (&lt;= 24 Months)
+            Requested Tenure (&le; 24 Months)
           </label>
           <input
             type="number"
@@ -330,12 +385,19 @@ export default function SubmitApplication() {
                               <td className="p-2">{a.requested_tenure_months}</td>
                               <td className="p-2">{a.decision}</td>
                               <td className="p-2">{a.score?.toFixed(2)}</td>
-                              <td className="p-2">
+                              <td className="p-2 space-x-2">
                                   <button
                                       onClick={() => handleAnalyzeClick(a)}
                                       className="px-2 py-1 bg-sky-100 text-sky-700 text-xs font-semibold rounded hover:bg-sky-200"
                                   >
                                       Analyze with AI
+                                  </button>
+                                  {/* --- NEW: Explain Score Button --- */}
+                                  <button
+                                      onClick={() => handleExplainScoreClick(a)}
+                                      className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded hover:bg-gray-200"
+                                  >
+                                      Explain Score
                                   </button>
                               </td>
                           </tr>
@@ -350,3 +412,4 @@ export default function SubmitApplication() {
     </section>
   );
 }
+
