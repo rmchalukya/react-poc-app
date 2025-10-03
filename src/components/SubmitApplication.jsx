@@ -1,73 +1,7 @@
 import React, { useState, useEffect } from "react";
-
-// --- Mock API Functions (Previously in api/client) ---
-// In a real app, these would make network requests.
-// For this example, we simulate the backend logic.
-let applications = [];
-let nextAppId = 1;
-
-const submitApp = async (applicantId, amount, tenure) => {
-  console.log("Submitting app:", { applicantId, amount, tenure });
-  // Simulate some processing delay
-  await new Promise(res => setTimeout(res, 500));
-
-  // Basic scoring logic simulation
-  let score = Math.random(); // Base score
-  if (amount > 2000) score -= 0.2;
-  if (tenure > 12) score -= 0.15;
-  if (applicantId < 10) score += 0.1; // Existing "good" clients
-
-  score = Math.max(0, Math.min(1, score)); // Clamp score between 0 and 1
-
-  let decision = "Review";
-  if (score > 0.7) decision = "Approved";
-  if (score < 0.4) decision = "Rejected";
-
-  const newApp = {
-    application_id: nextAppId++,
-    applicant_id: applicantId,
-    requested_amount: amount,
-    requested_tenure_months: tenure,
-    decision: decision,
-    score: score,
-    features: { // Mock feature data for explanation
-        historical_defaults: Math.random() * 0.1,
-        debt_to_income_ratio: Math.random() * 0.5,
-        credit_utilization: Math.random(),
-        loan_amount_to_salary_ratio: amount / 5000, // Assuming avg salary of 5000
-        tenure_risk_factor: tenure / 24,
-    }
-  };
-
-  applications.unshift(newApp);
-  return newApp;
-};
-
-const getRecentApps = async () => {
-  // Simulate some processing delay
-  await new Promise(res => setTimeout(res, 300));
-  return applications;
-};
-
-
-// --- UI Components (Previously in separate files) ---
-
-function Card({ children }) {
-    return (
-        <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
-            {children}
-        </div>
-    );
-}
-
-function InfoEmpty({ message }) {
-    return (
-        <div className="text-center py-8">
-            <p className="text-gray-500">{message}</p>
-        </div>
-    );
-}
-
+import { submitApp, getRecentApps } from "../api/client";
+import Card from "./Card";
+import InfoEmpty from "./InfoEmpty";
 
 // --- Simulated database of 25 applicants ---
 const SIMULATED_APPLICANTS = [
@@ -213,7 +147,7 @@ function ExplainScoreModal({ isOpen, onClose, features, appId }) {
                             {Object.entries(features).map(([key, value]) => (
                                 <li key={key} className="flex justify-between border-b py-1">
                                     <span className="text-gray-600 capitalize">{key.replace(/_/g, ' ')}:</span>
-                                    <span className="font-semibold text-gray-800">{typeof value === 'number' ? value.toFixed(4) : String(value)}</span>
+                                    <span className="font-semibold text-gray-800">{typeof value === 'number' ? value.toFixed(4) : value}</span>
                                 </li>
                             ))}
                         </ul>
@@ -235,7 +169,7 @@ function ExplainScoreModal({ isOpen, onClose, features, appId }) {
 export default function SubmitApplication() {
   const [applicantId, setApplicantId] = useState(1);
   // --- FIX: Store number inputs as strings to allow them to be empty ---
-  const [amount, setAmount] = useState("100");
+  const [amount, setAmount] = useState("1000");
   const [tenure, setTenure] = useState("1");
   const [submitting, setSubmitting] = useState(false);
   const [apps, setApps] = useState([]);
@@ -411,7 +345,6 @@ export default function SubmitApplication() {
           <input
             type="number"
             min={1}
-            max={24}
             value={tenure}
             // --- FIX: Update state with the raw string value ---
             onChange={(e) => setTenure(e.target.value)}
@@ -428,11 +361,6 @@ export default function SubmitApplication() {
           >
             {submitting ? "Submitting..." : "Submit Application"}
           </button>
-          {message && (
-            <div className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                {message.text}
-            </div>
-          )}
         </div>
       </form>
 
@@ -459,9 +387,7 @@ export default function SubmitApplication() {
                               <td className="p-2">{a.applicant_id}</td>
                               <td className="p-2">{a.requested_amount}</td>
                               <td className="p-2">{a.requested_tenure_months}</td>
-                              <td className="p-2 font-semibold" style={{
-                                color: a.decision === 'Approved' ? 'green' : a.decision === 'Rejected' ? 'red' : 'orange'
-                              }}>{a.decision}</td>
+                              <td className="p-2">{a.decision}</td>
                               <td className="p-2">{a.score?.toFixed(2)}</td>
                               <td className="p-2 space-x-2">
                                   <button
